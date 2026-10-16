@@ -107,7 +107,9 @@ let tm;$('q').oninput=()=>{clearTimeout(tm);tm=setTimeout(search,200)};['dist','
 $('pv').onclick=()=>{page--;render();scrollTo(0,0)};$('nx').onclick=()=>{page++;render();scrollTo(0,0)};
 const HEAD=['Sr','Voter Name','Relative Name','Institute','District','Age','G','Mobile (masked)','Address'];
 const rowsOut=()=>res.map(([i])=>{const r=D[i];return [r[0],r[1],r[2],r[5],r[4],r[6],r[7],mask(r[8]),r[3]]});
-async function save(name,data){try{const dl=await claude.use('downloads');if(!dl){alert('Download not available in this view. Open the link in the Claude app/browser.');return}await dl.save({filename:name,data})}catch(e){if(e&&e.code!=='declined')alert('Download failed: '+(e.message||e))}}
+async function save(name,data){const blob=data instanceof Blob?data:new Blob([data]);let dl=null;try{if(typeof claude!=='undefined')dl=await claude.use('downloads')}catch(e){}
+ if(dl){try{await dl.save({filename:name,data:blob})}catch(e){if(e&&e.code!=='declined')alert('Download failed: '+(e.message||e))}return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 $('pdf').onclick=async()=>{if(!res.length)return;const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
  doc.setFontSize(13);doc.text('Voter Search Results — Amravati Teachers Constituency',10,10);doc.setFontSize(8);doc.text(`Query: "${$('q').value}"  |  ${res.length} records  |  Created By Dr. Asshissh Mahajan, Nagpur`,10,15);
  doc.autoTable({head:[HEAD],body:rowsOut(),startY:18,margin:{left:8,right:8,bottom:10},styles:{fontSize:7,cellPadding:1.2},headStyles:{fillColor:[123,30,36]},columnStyles:{0:{cellWidth:10},5:{cellWidth:10},6:{cellWidth:8},7:{cellWidth:24}},
